@@ -41,7 +41,7 @@ namespace FilterLibC
         }
 
 
-        public Bitmap Apply(Bitmap input)
+        public Bitmap Apply(Bitmap input)       
         {
             //lock the bit
             BitmapData bmpData = input.LockBits(new Rectangle(0, 0, input.Width, input.Height),
