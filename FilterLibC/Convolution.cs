@@ -19,7 +19,7 @@ namespace FilterLibC
 
         public Convolution() { 
             int[,] k = { {1} };
-            this.kernel = k;
+            this.kernel = k;            
             this.offset = 0;
             this.size = 1;
             this.factor = 1;
