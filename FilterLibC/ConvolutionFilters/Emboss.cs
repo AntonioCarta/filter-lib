@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FilterLibC.ConvolutionFilters
 {
-    class Emboss : Convolution
+    public class Emboss : Convolution
     {
         static int[,] kernel = { 
             { -1, 0, -1 },

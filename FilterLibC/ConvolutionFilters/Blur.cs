@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FilterLibC.ConvolutionFilters
 {
-    class Blur : Convolution
+    public class Blur : Convolution
     {
         static int[,] kernel ={
                 { 1, 2, 1 },

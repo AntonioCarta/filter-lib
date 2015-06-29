@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 
 namespace FilterLibC
 {
+    //TODO: aggiungere parametri all'effetto
     public class SphereDistortion : Displacement
     {
         override protected Point calculateOffset(int x, int y, int width, int height)
