@@ -12,7 +12,7 @@ namespace FilterLibC
     public abstract class PixelFilter : IFilter
     {
         /// <summary>
-        /// Process a single pixel.
+        /// Calcola il valore di un singolo pixel.
         /// </summary>
         /// <param name="pixels"></param>
         /// <param name="index"></param>
@@ -27,7 +27,6 @@ namespace FilterLibC
                                                     ImageLockMode.ReadOnly, input.PixelFormat);
 
             int bytesPerPixel = Bitmap.GetPixelFormatSize(input.PixelFormat) / 8;
-            //NOTE: stride may include padding byte at the end
             int byteCount = bmpData.Stride * input.Height;
             byte[] pixels = new byte[byteCount];
             IntPtr ptrFirstPixel = bmpData.Scan0;
@@ -36,7 +35,7 @@ namespace FilterLibC
 
             ApplyToArray(pixels, bmpData);
 
-            // copy modified bytes in a new bitmap
+            // Copia i byte in una nuova bitmap.
             Bitmap output = new Bitmap(input.Width, input.Height, input.PixelFormat);
             BitmapData outData = output.LockBits(new Rectangle(0, 0, input.Width, input.Height),
                                                     ImageLockMode.WriteOnly, input.PixelFormat);

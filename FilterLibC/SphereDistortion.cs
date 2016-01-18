@@ -12,9 +12,11 @@ namespace FilterLibC
     //TODO: aggiungere parametri all'effetto
     public class SphereDistortion : Displacement
     {
+        public Size centerOff = Size.Empty;
+
         override protected Point calculateOffset(int x, int y, int width, int height)
         {
-            Point center = new Point(width / 2, height / 2);
+            Point center = new Point(width / 2 + centerOff.Width, height / 2 + centerOff.Height);
             Point dist = new Point(x - center.X, y - center.Y);
             double radius = Math.Sqrt(dist.X * dist.X + dist.Y * dist.Y);
             double theta = Math.Atan2(dist.Y, dist.X);

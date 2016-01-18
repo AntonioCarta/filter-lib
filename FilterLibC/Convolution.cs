@@ -27,9 +27,9 @@ namespace FilterLibC
         }
 
         /// <summary>
-        /// Initializes the Convolution filter with the given kernel.
+        /// Inizializza il filtro con il kernel dato.
         /// </summary>
-        /// <param name="kernel">kernel matrix.</param>
+        /// <param name="kernel">Array rappresentante il kernel.</param>
         /// <param name="factor"></param>
         /// <param name="offset"></param>
         public Convolution( int[,] kernel, int factor, int offset ) {
@@ -43,11 +43,10 @@ namespace FilterLibC
 
         public Bitmap Apply(Bitmap input)       
         {          
-            //lock the bit
+            // Lock sui bit della Bitmap.
             BitmapData bmpData = input.LockBits(new Rectangle(0, 0, input.Width, input.Height),
                                                     ImageLockMode.ReadOnly, input.PixelFormat);
 
-            //NOTE: stride may include padding byte at the end
             int byteCount = bmpData.Stride * input.Height;
             byte[] pixels = new byte[byteCount];
             IntPtr ptrFirstPixel = bmpData.Scan0;
@@ -56,7 +55,7 @@ namespace FilterLibC
 
             byte[] outpixels = ApplyToNewArray(pixels, bmpData);
             
-            // copy modified bytes in a new bitmap
+            // Copia i pixel in una nuova Bitmap.
             Bitmap output = new Bitmap(input.Width, input.Height);
             BitmapData outData = output.LockBits(new Rectangle(0, 0, input.Width, input.Height),
                                                     ImageLockMode.WriteOnly, input.PixelFormat);
@@ -82,13 +81,21 @@ namespace FilterLibC
 
             int delta = size / 2;
             int deltaInBytes = delta * bytesPerPixel;
-            // !!! border excluded !!!
+            // !!! Bordi esclusi !!!
             Parallel.For(delta, heightInPixels - delta, y =>
             {
                 int currentLine = y * bmpData.Stride;                
                 for (int x = deltaInBytes; x < widthInBytes - deltaInBytes; x++)
                 {
+                    // Voglio ignorare l'alpha.
+                    if (bytesPerPixel == 4 && (x % 4) == 3)
+                    {
+                        outpixels[currentLine + x] = pixels[currentLine + x];
+                        continue;
+                    }
+                    
                     int res = 0;
+                    // Convoluzione.
                     for (int i = 0; i < size; i++)
                     {
                         for (int j = 0; j < size; j++)

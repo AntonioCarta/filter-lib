@@ -11,23 +11,22 @@ namespace FilterLibC
     public interface IFilter
     {
         /// <summary>
-        /// Applies the filter.
-        /// The filter is guaranteed to work with the PixelFormat 32bppArgb and 24bppArgb.
+        /// Applica il filtro.
+        /// Il funzionamento è garantito se PixelFormat è 32bppArgb o 24bppArgb.
         /// </summary>
         /// <param name="input">input image</param>
         /// <returns></returns>
         Bitmap Apply(Bitmap input);
 
         /// <summary>
-        /// Applies the filter, but working directly on the pixels array.
+        /// Applica il filtro in-place.
         /// </summary>
         /// <param name="pixels"></param>
         /// <param name="bmpData"></param>
         void ApplyToArray(byte[] pixels, BitmapData bmpData);
 
         /// <summary>
-        /// Applies the filter, reading from the pixels array and writing the result in a new byte[].
-        /// pixels array is not modified.
+        /// Applica il filtro, restituendo il risultato in un nuovo byte[].
         /// </summary>
         /// <param name="pixels"></param>
         /// <param name="bmpData"></param>

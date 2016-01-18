@@ -16,32 +16,32 @@ namespace ImageLAB
     public partial class Form1 : Form
     {
         Bitmap oldOriginal;
-        Bitmap oldPreview;
-
         Bitmap originalBmp;
-        Bitmap previewBmp;
 
-        //filters
+        // Color filters
         Sepia sep = new Sepia();
         GrayScale gray = new GrayScale();
         Posterize poster = new Posterize();
         ColorFilter color = new ColorFilter();
         Median median = new Median();
 
+        // Displacement filters
         SphereDistortion sphere = new SphereDistortion();
         Pixelate pixel = new Pixelate();
 
+        // Convolution Filters
         SobelEdgeDetection sobel = new SobelEdgeDetection();
         Blur blur = new Blur();
         Emboss emboss = new Emboss();
         Sharpen sharp = new Sharpen();
+
+
         IFilter currentFilter = new Sepia();
 
         public Form1()
         {
             InitializeComponent();
-
-            //DEBUG: automatically open diablo img
+            //DEBUG: automatically open img
             // C:\Users\Antonio\Pictures
         }
 
@@ -77,31 +77,16 @@ namespace ImageLAB
             {
                 Bitmap bmp;
                 originalBmp = new Bitmap(ofd.FileName);
-                //we must convert to a supported format
-                if (originalBmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppArgb && originalBmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format24bppRgb)
+                // Tutte le immagini devono avere il formato PixelFormat.Format32bppArgb
+                if (originalBmp.PixelFormat != System.Drawing.Imaging.PixelFormat.Format32bppArgb)
                 {
                     bmp = new Bitmap(originalBmp.Width, originalBmp.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                     using (var gr = Graphics.FromImage(bmp))
                         gr.DrawImage(originalBmp, new Rectangle(0, 0, originalBmp.Width, originalBmp.Height));
                     originalBmp = bmp;
                 }
-
-                //resize the image for an efficient preview fo the filters effect
-                float ar1 = originalBmp.Height / (float) originalBmp.Width;
-                float ar2 = previewPic.Height / (float) previewPic.Width;
-
-                //preview pic
-                if (ar1 > ar2)                
-                    previewBmp = resizeImage(originalBmp, (int) ((1/ar1)*previewPic.Height), previewPic.Height);
-                else
-                    previewBmp = resizeImage(originalBmp, previewPic.Width, (int) (ar1*previewPic.Width));
-
-                oldPreview = previewBmp;
-
-                previewPic.Image = previewBmp;
-                previewPic.Invalidate();
-
-                mainPic.Image = originalBmp;
+                
+                mainPic.setImage(originalBmp);
                 mainPic.Invalidate();
             }
         }
@@ -117,136 +102,166 @@ namespace ImageLAB
         private void cancelBtn_Click(object sender, EventArgs e)
         {
             originalBmp = oldOriginal;
-            previewBmp = oldPreview;
-            mainPic.Image = originalBmp;
-            previewPic.Image = previewBmp;
+            mainPic.setImage(originalBmp);
             mainPic.Invalidate();
-            previewPic.Invalidate();
             cancelBtn.Enabled = false;
         }
 
         private void applyFilter()
         {
-            if (originalBmp == null) return;
-
+            if (originalBmp == null) return;            
             //save current images
             oldOriginal = originalBmp;
-            oldPreview = previewBmp;
             cancelBtn.Enabled = true;
 
             //apply filter
-            originalBmp = currentFilter.Apply(originalBmp);
-            previewBmp = currentFilter.Apply(previewBmp);
-
-            mainPic.Image = originalBmp;
-            previewPic.Image = previewBmp;
+            if (mainPic.selecting())
+                originalBmp = applyFilterToSelection();
+            else
+                originalBmp = currentFilter.Apply(originalBmp);
+    
+            mainPic.setImage(originalBmp);
             mainPic.Invalidate();
-            previewPic.Invalidate();
-            
         }
 
-        private void drawPreview() {
-            if (previewBmp == null) return;
-
-
-            previewBmp = currentFilter.Apply(oldPreview);
-            previewPic.Image = previewBmp;
-            previewPic.Invalidate();
-        }
-
-        private void filterBtn_MouseClick(object sender, EventArgs e)
+        private Bitmap applyFilterToSelection()
         {
-            switch( ((Button)sender).Name )
+            Bitmap bmp;
+            using (Bitmap sel = mainPic.getSelectedBitmap())
             {
-                case "sepBtn":
-                    currentFilter = sep;
+                bmp = new Bitmap(originalBmp.Width, originalBmp.Height);
+                Graphics g = Graphics.FromImage(bmp);
+                g.DrawImage(originalBmp, Point.Empty);                
+                Bitmap filt = currentFilter.Apply(sel);
+                g.DrawImage(filt, Point.Empty);           
+            }
+            return bmp;
+        }
+
+        private void btnCancelSelection_Click(object sender, EventArgs e)
+        {
+            mainPic.cancelSelection();
+            mainPic.Invalidate();
+        }
+
+        private void tbRed_ValueChanged(object sender, EventArgs e)
+        {
+            TrackBar tb = ((TrackBar) sender);
+            switch (tb.Name)
+            {
+                case "tbRed":
+                    color.fr = tb.Value;
+                    lblRed.Text = "Rosso: " + tb.Value;
+                    lblRed.Invalidate();
                     break;
-                case "grayBtn":
-                    currentFilter = gray;
+                case "tbGreen":
+                    color.fg = tb.Value;
+                    lblGreen.Text = "Verde : " + tb.Value;
+                    lblGreen.Invalidate();
                     break;
-                case "posterBtn":
-                    currentFilter = poster;
+                case "tbBlue":
+                    color.fb = tb.Value;
+                    lblBlue.Text = "Blu: " + tb.Value;
+                    lblBlue.Invalidate();
                     break;
-                case "colorBtn":
+                case "tbPixelSize":
+                    pixel.pixelSize = tb.Value;
+                    lblPixelSize.Text = "Dim. Pixel: " + tb.Value;
+                    lblPixelSize.Invalidate();
+                    break;
+                case "tbOffX":
+                    sphere.centerOff.Width = tbOffX.Value;
+                    lbloffX.Text = "Off X: " + tb.Value;
+                    lbloffX.Invalidate();
+                    break;
+                case "tbOffY":
+                    sphere.centerOff.Height = tb.Value;
+                    lbloffY.Text = "Off Y: " + tb.Value;
+                    lbloffY.Invalidate();
+                    break;
+            }
+        }
+
+        private void select_filter_click(object sender, MouseEventArgs e)
+        {
+            Button b = ((Button) sender);
+            switch (b.Name) { 
+                case "btnColor":
                     currentFilter = color;
                     break;
-                case "sphereBtn":
-                    currentFilter = sphere;
+                case "btnSepia":
+                    currentFilter = sep;
                     break;
-                case "medianBtn":
+                case "btnGray":
+                    currentFilter = gray;
+                    break;
+                case "btnPosterize":
+                    currentFilter = poster;
+                    break;
+                case "btnMedian":
                     currentFilter = median;
                     break;
-                case "pixelBtn":
+                case "btnSphere":
+                    currentFilter = sphere;
+                    break;
+                case "btnPixel":
                     currentFilter = pixel;
                     break;
-                case "sobelBtn":
+                case "btnSobel":
                     currentFilter = sobel;
                     break;
-                case "blurBtn":
+                case "btnBlur":
                     currentFilter = blur;
                     break;
-                case "embossBtn":
+                case "btnEmboss":
                     currentFilter = emboss;
                     break;
-                case "sharpBtn":
+                case "btnSharpen":
                     currentFilter = sharp;
                     break;
             }
             applyFilter();
         }
 
-        private void previewControlActivated(object sender, EventArgs e)
-        {
-            switch (((Control)sender).Name) {
-                case "sepBtn":
-                    currentFilter = sep;
-                    break;
-                case "grayBtn":
-                    currentFilter = gray;
-                    break;   
-                case "posterBtn":
-                    currentFilter = poster;
-                    break;
-                case "redBar":
-                    currentFilter = color;
-                    color.fr = ((TrackBar)sender).Value;
-                    break;
-                case "blueBar":
-                    currentFilter = color;
-                    color.fb = ((TrackBar)sender).Value;
-                    break;
-                case "greenBar":
-                    currentFilter = color;
-                    color.fg = ((TrackBar)sender).Value;
-                    break;
-                case "sphereBtn":
-                    currentFilter = sphere;
-                    break;
-                case "medianBtn":
-                    currentFilter = median;
-                    break;
-                case "pixelBtn":
-                    currentFilter = pixel;
-                    break;
-                case "pixelBar":
-                    pixel.pixelSize = ((TrackBar)sender).Value;
-                    currentFilter = pixel;
-                    break;
-                case "sobelBtn":
-                    currentFilter = sobel;
-                    break;
-                case "blurBtn":
-                    currentFilter = blur;
-                    break;
-                case "embossBtn":
-                    currentFilter = emboss;
-                    break;
-                case "sharpBtn":
-                    currentFilter = sharp;
-                    break;
+        Matrix createMatrix(Bitmap input) {
+            float pbx = mainPic.Width;
+            float pby = mainPic.Height;
+            float imgx = input.Width;
+            float imgy = input.Height;
+            float pbratio = mainPic.Width / mainPic.Height;
+            float imgratio = input.Width / input.Height;
+
+            // Dimensione dell'immagine dopo lo zoom.
+            float newx = pbx;
+            float newy = pby;
+            // Coordinate per la traslazione.
+            float offx = 0, offy = 0;
+            if (pbratio > imgratio)
+            {
+                newx = pby * imgratio;
+                offx = - (pbx - newx) / 2;
             }
-            drawPreview();
+            else
+            {
+                newy = pbx / imgratio;
+                offy = - (pby - newy) / 2;
+            }
+            Matrix m = new Matrix();
+            m.Translate(offx, offy);
+            float scale = Math.Max( imgx/pbx, imgy/pby );
+            m.Scale(scale, scale);
+
+            return m;
         }
 
+        private void btnCloseSelection_Click(object sender, EventArgs e)
+        {
+            mainPic.closeRegion();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
